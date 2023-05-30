@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-backend
+  labels:
+    app: customer-webapi
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      service: customer-backend
+  template:
+    metadata:
+      labels:
+        app: customer-webapi
+        service: customer-backend
+    spec:
+      containers:
+        - name: customer-webapi-container
+          image: customer-backend:latest
+          imagePullPolicy: Never  # or IfNotPresent
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          env:
+            - name: ASPNETCORE_URLS
+              value: http://+:80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-webapi-service
+  labels:
+    app: customer-webapi
+    service: customer-backend
+spec:
+  type: NodePort
+  ports:
+    - targetPort : 80
+      port: 80
+      nodePort: 30009
+      protocol: TCP
+  selector:
+    app: customer-webapi
+    service: customer-backend
