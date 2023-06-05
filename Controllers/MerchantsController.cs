@@ -4,6 +4,8 @@ using food_delivery.Producers;
 using food_delivery.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Stripe;
+using Stripe.Checkout;
 
 namespace food_delivery.Controllers;
 
@@ -19,11 +21,20 @@ public class MerchantsController : ControllerBase
     private readonly CustomerProducer _producer;
     private readonly string _topic;
 
-    public MerchantsController(IMerchantsService merchantsService, CustomerProducer producer, IOptions<KafkaSettings> kafkaSettings, ILogger<MerchantsController> logger)
+    private readonly StripeProductsService _stripeProductsService;
+
+    public MerchantsController(
+        IMerchantsService merchantsService,
+        CustomerProducer producer,
+        IOptions<KafkaSettings> kafkaSettings,
+        StripeProductsService stripeProductsService,
+        ILogger<MerchantsController> logger
+    )
     {
         _merchantsService = merchantsService;
         _producer = producer;
         _topic = kafkaSettings.Value.OrdersTopic;
+        _stripeProductsService = stripeProductsService;
         _logger = logger;
     }
 
@@ -48,7 +59,7 @@ public class MerchantsController : ControllerBase
 
     [HttpPost]
     [Route("{merchantId:length(24)}/orders")]
-    public async Task<IActionResult> Post([FromRoute] string merchantId, Order newOrder)
+    public async Task<IActionResult> FullfillOrder([FromRoute] string merchantId, Order newOrder)
     {
         // await _merchantsService.CreateOrderAsync(newOrder);
         string message = JsonSerializer.Serialize<Order>(newOrder);
@@ -58,35 +69,49 @@ public class MerchantsController : ControllerBase
         return Ok();
     }
 
-    // [HttpPut("{id:length(24)}")]
-    // public async Task<IActionResult> Update(string id, Merchant updatedMerchant)
-    // {
-    //     var book = await _merchantsService.GetAsync(id);
 
-    //     if (book is null)
-    //     {
-    //         return NotFound();
-    //     }
+    [HttpPost]
+    [Route("webhook")]
+    public async Task<IActionResult> Index()
+    {
+        var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
 
-    //     updatedMerchant.Id = book.Id;
+        Console.WriteLine(json);
 
-    //     await _merchantsService.UpdateAsync(id, updatedMerchant);
+        try
+        {
+            string? signature = Request.Headers["Stripe-Signature"];
+            if (string.IsNullOrEmpty(signature)) throw new Exception("signature not found");
+            var stripeEvent = _stripeProductsService.GetEvent(json, signature);
 
-    //     return NoContent();
-    // }
+            // Handle the checkout.session.completed event
+            if (stripeEvent.Type == Events.CheckoutSessionCompleted)
+            {
+                var session = stripeEvent.Data.Object as Stripe.Checkout.Session;
+                var options = new SessionGetOptions();
+                // options.AddExpand("line_items");
+                var service = new SessionService();
+                // Retrieve the session. If you require line items in the response, you may include them by expanding line_items.
+                Session sessionWithLineItems = service.Get(session.Id, options);
+                // StripeList<LineItem> lineItems = sessionWithLineItems.LineItems;
 
-    // [HttpDelete("{id:length(24)}")]
-    // public async Task<IActionResult> Delete(string id)
-    // {
-    //     var book = await _merchantsService.GetAsync(id);
+                // Fulfill the purchase...
+                // this.FulfillOrder(lineItems);
+                string merchantId = sessionWithLineItems.Metadata["merchantId"];
+                string jsonCart = sessionWithLineItems.Metadata["cart"];
+                if(string.IsNullOrEmpty(jsonCart)) throw new Exception();
+                Order? deserializedOrder = JsonSerializer.Deserialize<Order>(jsonCart);
+                if (deserializedOrder == null) throw new Exception("unable to deserialize cart");
 
-    //     if (book is null)
-    //     {
-    //         return NotFound();
-    //     }
+                return await FullfillOrder(merchantId, deserializedOrder);
+            }
 
-    //     await _merchantsService.RemoveAsync(id);
+            return Ok();
+        }
+        catch (StripeException e)
+        {
+            return BadRequest();
+        }
+    }
 
-    //     return NoContent();
-    // }
 }

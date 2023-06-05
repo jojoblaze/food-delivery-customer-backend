@@ -11,6 +11,7 @@
     <PackageReference Include="Confluent.Kafka" Version="2.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.5" />
     <PackageReference Include="MongoDB.Driver" Version="2.19.1" />
+    <PackageReference Include="Stripe.net" Version="41.19.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
