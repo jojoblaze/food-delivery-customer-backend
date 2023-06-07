@@ -1,4 +1,22 @@
 
+# Customer Back-end
+
+Back-end for customer application.
+
+## Swagger
+
+Open [http://localhost:5001](http://localhost:5001) to view Swagger in your browser.
+
+# Deployment
+
+In order to test and deploy the application on Kubernetes follow these steps:
+- create application Docker image;
+- publish Docker image on registry - for development push the image on your local Kind cluster;
+- run Kubernetes Deployment in the manifest.yml
+
+
+## Docker cheats
+
 Build Docker application image
 
 ```
@@ -11,11 +29,14 @@ Run Docker application container locally on port 8080
 docker run -p 8080:80 -e DOTNET_URLS=http://+:80 -e Logging__Loglevel__Default=Debug -e Logging__Loglevel__Microsoft.AspNetCore=Debug customer-backend
 ```
 
+## Kind cheats
+
 Push Docker application image into Kind cluster
 ```
 kind load docker-image customer-backend:latest
 ```
 
+## Kubernetes cheats
 
 Create Kubernetes Deploy
 ```
