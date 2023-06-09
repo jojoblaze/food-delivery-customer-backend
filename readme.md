@@ -33,14 +33,14 @@ docker run -p 8080:80 -e DOTNET_URLS=http://+:80 -e Logging__Loglevel__Default=D
 
 Push Docker application image into Kind cluster
 ```
-kind load docker-image customer-backend:latest
+kind load docker-image customer-backend:latest --name <cluster name>
 ```
 
 ## Kubernetes cheats
 
 Create Kubernetes Deploy
 ```
-kubectl create -f manifest.yml
+kubectl create -f manifest.yml --context kind-<cluster name>
 ```
 
 To access the application, check <b>NodePort</b> in the manifest.yml
