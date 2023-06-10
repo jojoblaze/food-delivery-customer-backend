@@ -48,7 +48,8 @@ public class CheckoutController : ControllerBase
     [Route("{merchantId:length(24)}/orders")]
     public async Task<IActionResult> Post([FromRoute] string merchantId, Order newOrder)
     {
-        var domain = "http://localhost:3001";
+        // var domain = $"{this.Request.Scheme}://{this.Request.Host}";
+        var domain = $"{this.Request.Scheme}://{this.Request.Headers["X-Forwarded-Host"]}";
         SessionCreateOptions options = new SessionCreateOptions();
         options.LineItems = new List<SessionLineItemOptions>(); ;
         options.Mode = "payment";
