@@ -62,9 +62,15 @@ public class MerchantsController : ControllerBase
     public async Task<IActionResult> FullfillOrder([FromRoute] string merchantId, Order newOrder)
     {
         // await _merchantsService.CreateOrderAsync(newOrder);
+        _logger.LogInformation($"Fullfilling order");
+
+        _logger.LogInformation($"Producing order to Kafka");
         string message = JsonSerializer.Serialize<Order>(newOrder);
         await _producer.SendOrderRequest(_topic, message);
 
+
+
+        _logger.LogInformation($"Order fullfilled withour errors");
         // return CreatedAtAction(nameof(Get), new { id = newOrder.Id }, newOrder);
         return Ok();
     }
@@ -77,6 +83,8 @@ public class MerchantsController : ControllerBase
         var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
 
         Console.WriteLine(json);
+
+        _logger.LogInformation($"Received Stripe Checkout Hook - domain: {json}");
 
         try
         {
@@ -99,7 +107,7 @@ public class MerchantsController : ControllerBase
                 // this.FulfillOrder(lineItems);
                 string merchantId = sessionWithLineItems.Metadata["merchantId"];
                 string jsonCart = sessionWithLineItems.Metadata["cart"];
-                if(string.IsNullOrEmpty(jsonCart)) throw new Exception();
+                if (string.IsNullOrEmpty(jsonCart)) throw new Exception();
                 Order? deserializedOrder = JsonSerializer.Deserialize<Order>(jsonCart);
                 if (deserializedOrder == null) throw new Exception("unable to deserialize cart");
 

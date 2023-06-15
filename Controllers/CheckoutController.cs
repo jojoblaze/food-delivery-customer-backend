@@ -50,6 +50,7 @@ public class CheckoutController : ControllerBase
     {
         // var domain = $"{this.Request.Scheme}://{this.Request.Host}";
         var domain = $"{this.Request.Scheme}://{this.Request.Headers["X-Forwarded-Host"]}";
+
         SessionCreateOptions options = new SessionCreateOptions();
         options.LineItems = new List<SessionLineItemOptions>(); ;
         options.Mode = "payment";

@@ -47,6 +47,15 @@ kubectl create -f manifest.yml --context kind-<cluster name>
 kubectl create -f manifest.yml --context kind-food-delivery-cluster
 ```
 
+
+To enter container
+
+```
+kubectl --context kind-<cluster name> exec <pod-id>  -it -- /bin/sh
+
+kubectl --context kind-food-delivery-cluster exec customer-backend-<pod-id> -it -- /bin/sh
+
+
 To access the application, check <b>NodePort</b> in the manifest.yml
 For this application is defined the nodePort as 30008. This means that the service will be exposed on port 30008 of Kubernetes nodes. 
 Ensure that you are accessing your web API using the correct host IP address and the node port.

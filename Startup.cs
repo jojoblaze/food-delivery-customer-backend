@@ -32,7 +32,7 @@ if (app.Environment.IsDevelopment())
         .AllowAnyMethod()
         .AllowAnyHeader()
         .WithOrigins(
-            "http://172.19.0.2:30011", // kubernetes local
+            "http://food-delivery.lcl:30011", // kubernetes local
             "http://localhost:3001" // development
             )
         );
